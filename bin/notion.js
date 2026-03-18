@@ -141,6 +141,13 @@ MARKDOWN COMMANDS (no more folder writebacks)
   replace <page-id>               Replace all page content with new markdown
   append <page-id>                Append markdown to end of a page
   stream <page-id>                Stream a page's content block-by-block
+  archive <page-id> [--path]      Governed archiving to local .archives/ dir
+  log <page-id> --message <text>  Append a fast timestamped status update
+
+WEBHOOK COMMANDS (real-time notification layer)
+  listen create <page-id> --url   Subscribe to page updates
+  listen delete <webhook-id>      Remove webhook subscription
+  listen list                     List active webhooks
 
 RESOURCE COMMANDS
   search <query>                  Search pages and databases
@@ -309,6 +316,36 @@ async function cmdAppend(subArgs) {
 }
 
 // n stream <page-id>
+async function cmdArchive(subArgs) {
+	const pageId = subArgs[0]
+	if (!pageId) {
+		error('Page ID is required.  Usage: n archive <page-id> [--path ./.archives]')
+		process.exit(1)
+	}
+
+	const rawPath = getFlag('path', subArgs) || './.archives'
+	const targetPath = path.resolve(rawPath)
+
+	if (path.basename(targetPath) !== '.archives') {
+		error('Governance Violation: Target directory must be named exactly ".archives"')
+		process.exit(1)
+	}
+
+	if (!fs.existsSync(targetPath)) {
+		fs.mkdirSync(targetPath, { recursive: true })
+	}
+
+	const notion = getClient()
+	try {
+		const result = await notion.readMarkdown(pageId)
+		const filePath = path.join(targetPath, `${pageId}.md`)
+		fs.writeFileSync(filePath, result.markdown)
+		out({ archived: true, file: filePath })
+	} catch (e) {
+		throw e
+	}
+}
+
 async function cmdStream(subArgs) {
 	const pageId = subArgs[0]
 	if (!pageId) {
@@ -326,6 +363,31 @@ async function cmdStream(subArgs) {
 		// stream-specific error logic here if needed in the future.
 		throw e
 	}
+}
+
+async function cmdLog(subArgs) {
+  const pageId = subArgs[0]
+  if (!pageId) {
+    error('Page ID is required.  Usage: n log <page-id> --message "Build started"')
+    process.exit(1)
+  }
+
+  const message = getFlag('message', subArgs)
+  if (!message) {
+    error('Message is required.  Usage: n log <page-id> --message "Build started"')
+    process.exit(1)
+  }
+
+  const status = getFlag('status', subArgs)
+
+  const notion = getClient()
+  const result = await notion.log(pageId, message, { status })
+
+  if (result && result.results && result.results.length > 0) {
+    out({ log_appended: true, block_id: result.results[0].id })
+  } else {
+    out({ log_appended: true })
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -407,9 +469,10 @@ async function cmdDbQuery(subArgs) {
   if (!id) { error('Database ID required.'); process.exit(1) }
   const notion = getClient()
   out(await notion.queryDatabase(id, {
-    limit: parseInt(getFlag('limit', subArgs)) || 100,
+    limit: parseInt(getFlag('limit', subArgs)) || parseInt(getFlag('page-size', subArgs)) || 100,
     filter: parseJsonFlag('filter', subArgs),
-    sorts: parseJsonFlag('sorts', subArgs)
+    sorts: parseJsonFlag('sorts', subArgs),
+    start_cursor: getFlag('start-cursor', subArgs)
   }))
 }
 
@@ -502,6 +565,35 @@ async function cmdCommentCreate(subArgs) {
   const notion = getClient()
   out(await notion.createComment({ parentId, discussionId, content }))
 }
+
+// ---------------------------------------------------------------------------
+// WEBHOOKS
+// ---------------------------------------------------------------------------
+
+async function cmdListenCreate(subArgs) {
+  const pageId = subArgs[0]
+  const url = getFlag('url', subArgs)
+
+  if (!pageId) { error('Page ID required.'); process.exit(1) }
+  if (!url) { error('Webhook URL required (--url).'); process.exit(1) }
+
+  const notion = getClient()
+  out(await notion.createWebhook(pageId, url))
+}
+
+async function cmdListenDelete(subArgs) {
+  const webhookId = subArgs[0]
+  if (!webhookId) { error('Webhook ID required.'); process.exit(1) }
+
+  const notion = getClient()
+  out(await notion.deleteWebhook(webhookId))
+}
+
+async function cmdListenList() {
+  const notion = getClient()
+  out(await notion.listWebhooks())
+}
+
 
 // ---------------------------------------------------------------------------
 // Simple markdown-to-blocks parser (for block-based page create / append)
@@ -609,6 +701,8 @@ async function main() {
       case 'replace': await cmdReplace(subArgs); break
       case 'append':  await cmdAppend(subArgs); break
       case 'stream':  await cmdStream(subArgs); break
+      case 'archive': await cmdArchive(subArgs); break
+      case 'log':     await cmdLog(subArgs); break
 
       // Search
       case 'search':  await cmdSearch(subArgs); break
@@ -673,6 +767,18 @@ async function main() {
         } else {
           error(`Unknown comment command: ${subCommand}. Use: create`)
           process.exit(1)
+        }
+        break
+
+      // Webhooks
+      case 'listen':
+        switch (subCommand) {
+          case 'create': await cmdListenCreate(subSubArgs); break
+          case 'delete': await cmdListenDelete(subSubArgs); break
+          case 'list':   await cmdListenList(); break
+          default:
+            error(`Unknown listen command: ${subCommand}. Use: create, delete, list`)
+            process.exit(1)
         }
         break
 

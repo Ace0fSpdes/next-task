@@ -54,3 +54,12 @@ All write commands accept content three ways:
 Uses `file:./notion-sdk-js-main` — a local file reference.
 The SDK must be built (`npm install` in its directory runs `tsc`) before the CLI works.
 API version: 2026-03-11 (configurable via `NOTION_VERSION` env var).
+
+### New Commands Added
+
+- \`n stream <page-id>\`: Streams a page's content block-by-block.
+- \`n archive <page-id> [--path <dir>]\`: Governed archiving, allowing downloading pages specifically to \`.archives\` directory.
+- \`n listen create <page-id> --url <url>\`: Webhook listener registration.
+- \`n listen delete <webhook-id>\`: Webhook listener removal.
+- \`n listen list\`: List webhook listeners.
+- \`n log <page-id> --message <message> [--status <status>]\`: Optimized logging command to append status updates as a single block.
