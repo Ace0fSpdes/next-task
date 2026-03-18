@@ -1,0 +1,148 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2026-03-16T06:00:00Z",
+  "framework": "expert-developer",
+  "help_commands": {
+    "init-agents-dir": {
+      "description": "Initialize .agents/ directory structure with all required subdirectories and files",
+      "usage": "init-agents-dir [--base-dir PATH]",
+      "options": {
+        "--base-dir": "Base directory to initialize (default: current directory)"
+      },
+      "examples": [
+        "init-agents-dir",
+        "init-agents-dir --base-dir C:\\projects\\my-project",
+        "init-agents-dir --base-dir /home/user/projects/my-project"
+      ],
+      "creates": [
+        ".agents/",
+        ".agents/knowledge/",
+        ".agents/knowledge/deployment/",
+        ".agents/knowledge/architecture/",
+        ".agents/knowledge/troubleshooting/",
+        ".agents/knowledge/.changelog/",
+        ".agents/patterns/",
+        ".agents/patterns/.changelog/",
+        ".agents/truth/",
+        ".agents/tools/",
+        ".agents/tools/logs/",
+        ".agents/tools/errors/",
+        ".agents/tools/errors/.archive/"
+      ],
+      "returns": "JSON with success status, created directories, and base directory path",
+      "errors": [
+        "Directory already exists (non-fatal, continues)",
+        "Permission denied creating directory",
+        "Invalid base directory path"
+      ],
+      "see_also": ["help", "build-index", "search-knowledge"]
+    },
+    "build-index": {
+      "description": "Build semantic search index from documents in .agents/ directory",
+      "usage": "build-index [--base-dir PATH] [--output PATH] [--verbose]",
+      "options": {
+        "--base-dir": "Base directory containing .agents/ (default: current directory)",
+        "--output": "Output index path (default: .agents/index.json)",
+        "--verbose": "Show detailed indexing progress"
+      },
+      "examples": [
+        "build-index",
+        "build-index --verbose",
+        "build-index --base-dir C:\\projects\\my-project --verbose",
+        "build-index --output C:\\custom\\path\\index.json"
+      ],
+      "creates": [".agents/index.json with TF-IDF vectors and semantic tags"],
+      "indexes": [
+        "All .md files in .agents/knowledge/",
+        "All .md files in .agents/patterns/",
+        "Extracts YAML frontmatter for metadata",
+        "Calculates TF-IDF weights for all terms",
+        "Builds semantic tags index"
+      ],
+      "returns": "JSON with success status, documents indexed, vocabulary size, and statistics",
+      "errors": [
+        "No .agents/ directory found",
+        "No markdown files to index",
+        "Invalid YAML frontmatter in document",
+        "Index write failed"
+      ],
+      "performance": "~50-100ms per document on modern hardware",
+      "see_also": ["search-knowledge", "help", "init-agents-dir"]
+    },
+    "search-knowledge": {
+      "description": "Search .agents/ knowledge base semantically with TF-IDF and semantic tags",
+      "usage": "search-knowledge --query TEXT [--scope SCOPE] [--limit N] [--page N]",
+      "options": {
+        "--query": "Search query (required) - e.g., 'binary swap deployment'",
+        "--scope": "Comma-separated scopes to search (optional) - e.g., 'deployment,architecture'",
+        "--limit": "Max results per page (default: 5)",
+        "--page": "Page number for pagination (default: 1)"
+      },
+      "examples": [
+        "search-knowledge --query 'binary swap'",
+        "search-knowledge --query 'deployment' --scope deployment",
+        "search-knowledge --query 'error handling' --limit 10 --page 1",
+        "search-knowledge --query 'atomic operations' --scope architecture,patterns --limit 3"
+      ],
+      "search_algorithm": "Hybrid: TF-IDF (70%) + Semantic Tags (30%)",
+      "results": "File path, relevance score, snippet of matched content, semantic tags",
+      "pagination": "Shows current page, total pages, and 'next' command for next page",
+      "returns": "JSON with search results, pagination info, and execution time",
+      "errors": [
+        "Index not found - run 'build-index' first",
+        "Invalid query (empty or too short)",
+        "Invalid scope (unknown category)",
+        "No results found for query"
+      ],
+      "tips": [
+        "Use specific terms for better results",
+        "Use --scope to narrow search to specific categories",
+        "Use --limit to control result volume",
+        "Pagination shows 'next page' command to continue"
+      ],
+      "see_also": ["build-index", "help", "init-agents-dir"]
+    },
+    "help": {
+      "description": "Display help for expert-developer framework commands",
+      "usage": "help [COMMAND]",
+      "options": {
+        "COMMAND": "Specific command to get help for (optional)"
+      },
+      "examples": ["help", "help init-agents-dir", "help build-index", "help search-knowledge"],
+      "displays": [
+        "List of all available commands (if no COMMAND specified)",
+        "Detailed help for specific command (if COMMAND specified)"
+      ],
+      "includes": [
+        "Command description",
+        "Usage syntax",
+        "Available options",
+        "Examples",
+        "Common errors and solutions",
+        "Related commands"
+      ],
+      "returns": "Formatted help text",
+      "see_also": ["All commands"]
+    }
+  },
+  "error_help": {
+    "general": {
+      "title": "General Framework Help",
+      "topics": [
+        "Getting started with expert-developer",
+        "Understanding .agents/ directory structure",
+        "YAML frontmatter format for documents",
+        "Semantic tagging best practices"
+      ]
+    },
+    "troubleshooting": {
+      "title": "Troubleshooting Guide",
+      "topics": [
+        "Index not building - common causes",
+        "Search returning no results",
+        "Permission errors",
+        "Document parsing failures"
+      ]
+    }
+  }
+}

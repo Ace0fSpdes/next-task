@@ -1,0 +1,295 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2026-03-16T06:00:00Z",
+  "framework": "expert-developer",
+  "error_categories": {
+    "initialization": {
+      "description": "Errors during .agents/ directory initialization",
+      "errors": {
+        "INIT_DIR_EXISTS": {
+          "message": "Directory already exists at specified path",
+          "severity": "warning",
+          "remediation": [
+            "If you want to reset: backup existing .agents/ directory first",
+            "Then delete the directory and run init-agents-dir again",
+            "Or run with --force flag to overwrite (careful!)"
+          ],
+          "cause": "User ran init-agents-dir in project that already has .agents/",
+          "example": "init-agents-dir --base-dir C:\\project (where .agents/ already exists)"
+        },
+        "INIT_PERMISSION_DENIED": {
+          "message": "Permission denied creating directory structure",
+          "severity": "error",
+          "remediation": [
+            "Check file permissions in target directory",
+            "Run with elevated privileges if needed",
+            "Choose a different base directory with write access",
+            "Check disk space availability"
+          ],
+          "cause": "Insufficient permissions or disk full",
+          "example": "Running in read-only filesystem or without admin rights"
+        },
+        "INIT_INVALID_PATH": {
+          "message": "Invalid or non-existent base directory path",
+          "severity": "error",
+          "remediation": [
+            "Verify the path exists and is a directory",
+            "Use absolute paths instead of relative paths",
+            "Check for typos in path",
+            "Use forward slashes on Linux/macOS, backslashes on Windows"
+          ],
+          "cause": "Bad path syntax or non-existent directory",
+          "example": "init-agents-dir --base-dir /nonexistent/path"
+        }
+      }
+    },
+    "indexing": {
+      "description": "Errors during index building",
+      "errors": {
+        "INDEX_NO_AGENTS_DIR": {
+          "message": "No .agents/ directory found",
+          "severity": "error",
+          "remediation": [
+            "Run 'init-agents-dir' first to create directory structure",
+            "Verify you're in correct project directory",
+            "Check that .agents/ directory exists and is readable"
+          ],
+          "cause": "User ran build-index without initializing .agents/ first",
+          "example": "build-index in fresh project without init-agents-dir"
+        },
+        "INDEX_NO_DOCUMENTS": {
+          "message": "No markdown documents found to index",
+          "severity": "warning",
+          "remediation": [
+            "Create markdown files in .agents/knowledge/ or .agents/patterns/",
+            "Ensure files have .md extension",
+            "Add YAML frontmatter to documents (optional but recommended)",
+            "Re-run build-index after adding documents"
+          ],
+          "cause": "Empty .agents/ directory with no .md files",
+          "example": "build-index after init-agents-dir but before creating documents"
+        },
+        "INDEX_INVALID_YAML": {
+          "message": "Invalid YAML frontmatter in document: {filename}",
+          "severity": "warning",
+          "remediation": [
+            "Check YAML syntax in {filename}",
+            "Ensure frontmatter is between --- delimiters",
+            "Use valid YAML syntax (proper indentation, quotes)",
+            "Check for special characters that need escaping",
+            "Document will be indexed with default metadata"
+          ],
+          "cause": "Malformed YAML in document frontmatter",
+          "example": "---\ntitle: My Doc\nsemantic_tags: [tag1, tag2  <- missing bracket"
+        },
+        "INDEX_WRITE_FAILED": {
+          "message": "Failed to write index file",
+          "severity": "error",
+          "remediation": [
+            "Check write permissions for .agents/index.json",
+            "Verify disk space available",
+            "Check if file is locked by another process",
+            "Try running with elevated privileges",
+            "Check if .agents/tools/ directory exists"
+          ],
+          "cause": "Permission denied or disk full when writing index",
+          "example": "build-index with read-only filesystem"
+        },
+        "INDEX_PARSE_ERROR": {
+          "message": "Error parsing document: {filename}",
+          "severity": "warning",
+          "remediation": [
+            "Check document is valid UTF-8 text",
+            "Verify file is readable",
+            "Check for binary content in markdown file",
+            "Document will be skipped, continue with others"
+          ],
+          "cause": "Encoding issue or binary file in documents",
+          "example": "Markdown file with mixed encodings"
+        }
+      }
+    },
+    "search": {
+      "description": "Errors during semantic search",
+      "errors": {
+        "SEARCH_INDEX_NOT_FOUND": {
+          "message": "Search index not found. Run 'build-index' first",
+          "severity": "error",
+          "remediation": [
+            "Run: build-index",
+            "Verify .agents/index.json was created successfully",
+            "Check for build-index errors in previous step",
+            "Then retry search-knowledge"
+          ],
+          "cause": "User ran search-knowledge before building index",
+          "example": "search-knowledge --query 'deployment' (first time)"
+        },
+        "SEARCH_EMPTY_QUERY": {
+          "message": "Search query is empty or too short",
+          "severity": "error",
+          "remediation": [
+            "Provide a meaningful search query (min 2 characters)",
+            "Use specific terms related to what you're looking for",
+            "Example: 'binary swap' instead of 'swap'",
+            "Use --query flag: search-knowledge --query 'your query'"
+          ],
+          "cause": "Missing or empty --query parameter",
+          "example": "search-knowledge (no query provided)"
+        },
+        "SEARCH_INVALID_SCOPE": {
+          "message": "Invalid scope: {scope}. Valid scopes: {valid_scopes}",
+          "severity": "error",
+          "remediation": [
+            "Use valid scope from list: {valid_scopes}",
+            "Omit --scope to search all documents",
+            "Use comma-separated scopes: --scope deployment,architecture",
+            "Check .agents/index.json for available scopes"
+          ],
+          "cause": "User specified unknown scope",
+          "example": "search-knowledge --query 'test' --scope invalid_scope"
+        },
+        "SEARCH_NO_RESULTS": {
+          "message": "No results found for query: {query}",
+          "severity": "info",
+          "remediation": [
+            "Try different search terms",
+            "Use simpler or more general keywords",
+            "Remove --scope filter to search all documents",
+            "Run 'build-index' to refresh index (documents may have been added)",
+            "Check document titles and semantic_tags in .agents/"
+          ],
+          "cause": "Query doesn't match any documents",
+          "example": "search-knowledge --query 'nonexistent topic'"
+        },
+        "SEARCH_INVALID_PAGE": {
+          "message": "Invalid page number: {page}. Total pages: {total_pages}",
+          "severity": "error",
+          "remediation": [
+            "Use page number between 1 and {total_pages}",
+            "Use --page 1 to start from beginning",
+            "Use --limit to change results per page",
+            "Check pagination info in previous results"
+          ],
+          "cause": "User requested page beyond available results",
+          "example": "search-knowledge --query 'test' --page 100 (when only 3 pages)"
+        }
+      }
+    },
+    "execution": {
+      "description": "Errors during task execution",
+      "errors": {
+        "EXEC_TASK_NOT_FOUND": {
+          "message": "Task not found: {task_name}",
+          "severity": "error",
+          "remediation": [
+            "Run 'help' to see available commands",
+            "Check spelling of command name",
+            "Ensure framework is properly initialized",
+            "Available tasks: init-agents-dir, build-index, search-knowledge, help"
+          ],
+          "cause": "User typo or task not registered",
+          "example": "init-agents-dir-typo (missing hyphen)"
+        },
+        "EXEC_MISSING_PARAMETER": {
+          "message": "Missing required parameter: {parameter}",
+          "severity": "error",
+          "remediation": [
+            "Run 'help {task_name}' to see required parameters",
+            "Add missing parameter to command",
+            "Example: search-knowledge --query 'your query'"
+          ],
+          "cause": "User didn't provide required argument",
+          "example": "search-knowledge (missing --query)"
+        },
+        "EXEC_INVALID_PARAMETER": {
+          "message": "Invalid parameter value: {parameter}={value}",
+          "severity": "error",
+          "remediation": [
+            "Check parameter value format",
+            "Run 'help {task_name}' for valid formats",
+            "Use quotes for values with spaces",
+            "Check for typos in parameter names"
+          ],
+          "cause": "Bad parameter format or unsupported value",
+          "example": "build-index --limit abc (should be number)"
+        },
+        "EXEC_TIMEOUT": {
+          "message": "Task execution timeout after {timeout}ms",
+          "severity": "error",
+          "remediation": [
+            "Task may be processing large dataset",
+            "Try with smaller --limit or --scope",
+            "Check system resources (CPU, memory, disk)",
+            "Retry the command",
+            "Check logs for more details"
+          ],
+          "cause": "Long-running operation exceeded timeout",
+          "example": "build-index on very large .agents/ directory"
+        }
+      }
+    },
+    "logging": {
+      "description": "Errors related to logging and tracking",
+      "errors": {
+        "LOG_WRITE_FAILED": {
+          "message": "Failed to write log entry",
+          "severity": "warning",
+          "remediation": [
+            "Check write permissions for .agents/skills/expert-developer/scripts/tools/",
+            "Verify disk space available",
+            "Check if logs.json is locked",
+            "Continue execution (logging failure doesn't block operation)"
+          ],
+          "cause": "Permission denied when writing logs",
+          "example": "Running in read-only directory"
+        },
+        "LOG_PRUNE_FAILED": {
+          "message": "Failed to prune old logs",
+          "severity": "warning",
+          "remediation": [
+            "Check permissions for logs directory",
+            "Manually clean .agents/skills/expert-developer/scripts/tools/logs.json if needed",
+            "Retry pruning later",
+            "This doesn't affect normal operation"
+          ],
+          "cause": "Error during log cleanup",
+          "example": "Insufficient permissions to modify logs"
+        }
+      }
+    }
+  },
+  "error_patterns": {
+    "misuse_patterns": [
+      {
+        "pattern": "User runs search-knowledge before build-index",
+        "error": "SEARCH_INDEX_NOT_FOUND",
+        "frequency": "common",
+        "solution": "Guide user to run build-index first"
+      },
+      {
+        "pattern": "User provides empty or very short query",
+        "error": "SEARCH_EMPTY_QUERY",
+        "frequency": "common",
+        "solution": "Provide example queries"
+      },
+      {
+        "pattern": "User specifies invalid scope",
+        "error": "SEARCH_INVALID_SCOPE",
+        "frequency": "occasional",
+        "solution": "Show valid scopes from index"
+      },
+      {
+        "pattern": "User forgets --query parameter",
+        "error": "EXEC_MISSING_PARAMETER",
+        "frequency": "common",
+        "solution": "Show help with examples"
+      },
+      {
+        "pattern": "User tries to initialize existing project",
+        "error": "INIT_DIR_EXISTS",
+        "frequency": "occasional",
+        "solution": "Warn and suggest backup before reset"
+      }
+    ]
+  }
+}

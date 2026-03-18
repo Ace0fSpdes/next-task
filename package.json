@@ -1,0 +1,25 @@
+{
+  "name": "notion-cli",
+  "version": "1.0.0",
+  "description": "A CLI tool for interacting with Notion workspaces",
+  "main": "src/index.js",
+  "bin": {
+    "n": "./bin/notion.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "notion",
+    "cli",
+    "notion-api"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@notionhq/client": "file:./notion-sdk-js-main"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

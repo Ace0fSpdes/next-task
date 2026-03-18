@@ -1,0 +1,27 @@
+# Dependencies
+/node_modules
+
+# Environment variables
+.env
+
+# Build output
+/build
+/dist
+/notion-sdk-js-main/build
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
