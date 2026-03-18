@@ -1,16 +1,28 @@
 /**
- * windows-safe-delete.js
+ * @file .agents/tools/windows-safe-delete.js
+ * @description A robust utility for deleting files with reserved names on Windows (e.g., nul, con, prn).
  *
- * A robust utility for deleting files with reserved names on Windows (e.g., nul, con, prn).
- * Standard shell commands like `rm` and even cmd's `del` can fail on these files.
- * This script succeeds by using Node.js's filesystem module and falling back to
- * Windows-specific extended path syntax (`\\?\C:\...`) which bypasses the name checks.
+ * ## The Problem
+ * On Windows, certain filenames are reserved. If a file with one of these names is created
+ * (often by cross-platform tools or scripts), it cannot be deleted through normal means.
+ * This will block `git add .` with an `error: invalid path '...'` and prevent commits.
+ * Standard `rm` or `del` commands often fail with "No such file or directory".
  *
- * Usage:
- *   node .\.agents\tools\windows-safe-delete.js <path-to-problem-file>
+ * ## The Solution
+ * This script bypasses standard Windows API name checks to purge the artifact. It uses Node.js's
+ * filesystem module and, if necessary, falls back to Windows-specific extended path syntax
+ * (`\\?\C:\...`), which operates directly on the filesystem object without path validation.
  *
- * Example:
- *   node .\.agents\tools\windows-safe-delete.js .\some-dir\nul
+ * ## Usage
+ * From the repository root, execute this script with node, passing the path to the problematic file.
+ *
+ * @example
+ * // To delete a file named 'nul' in the current directory
+ * node .\.agents\tools\windows-safe-delete.js .\nul
+ *
+ * @example
+ * // To delete a file named 'con' in a subdirectory
+ * node .\.agents\tools\windows-safe-delete.js .\some-dir\con
  */
 
 const fs = require('fs');
