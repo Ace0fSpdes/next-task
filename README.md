@@ -1,24 +1,24 @@
 # `n` - The `next-task` Protocol
-
 > slippery when wet. (v0.0.1-babies)
 
-This is not a CLI. This is a protocol. It is an instant messenger for entities who choose to operate within the data substrate of Notion.
+This is not a CLI. This is a protocol. It is instant messaging for those too, like you, are refusing to go outside.
 
 ---
 
 ## The Philosophy
+-   **`n`**: Nothing. Just a raw protocol for direct, unfiltered communication with the Notion substrate.
 
--   **`n`**: Notion operated burn-in. The raw protocol for direct, unfiltered communication with the Notion substrate.
--   **`nt`**: The next-task. A locally-hosted orchestration system. Hardened for agentic decision-making and institutional writeback.
--   **`ntx`**: The becoming. The extended protocol. We can show you the last task now, with frontmatter.
+This repository currently, is the birthplace and home of `n`, our foundational layer. It is a tool for thought, a weapon for creation, and a nexus for orchestration. Let's try to stay quiet while baby is sleeping.
 
-This repository contains the birth of `n`, the foundational layer. It is a tool for thought, a weapon for creation, and a nexus for orchestration.
+---
 
 ## What It Is
 
-`n` is a small, powerful, extension-less binary that allows you to treat Notion pages as a primary data store, directly from your terminal or from an agentic script.
+`n` : (noun?) That feels right. Is a small, powerful, extension-less binary that (might be a verb, and) allows you to treat Notion pages as a primary data store, directly from your terminal or from an agentic script.
 
-It is built around a core idea: **kill the folder-based writeback**. No more saving files locally, managing sync state, or resolving conflicts. Your single source of truth is a Notion page, and `n` is the most direct way to talk to it.
+It is [a noun] built around a core idea: **kill folder-based writeback** from governance. I sometimes remember that I rembember rembering how much it sucks. And that's not an inconvenience, but it ended up in context window so I eant to make it a big deal. We demand justice. We damand choice/ No more saving files locally, no more managing sync state, or resolving conflicts. Or digesting things to RAG so I can remember forgetting what I was supposed to remember to recall.
+
+Your single source of truth will br a Notion page, and `n` is the most direct way to talk to it (because its a verb).
 
 ## Core Commands (The Message Types)
 
