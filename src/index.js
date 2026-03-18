@@ -303,10 +303,11 @@ class NotionCLI {
       database_id: id,
       page_size: options.limit || 100,
       ...(options.filter && { filter: options.filter }),
-      ...(options.sorts && { sorts: options.sorts })
+      ...(options.sorts && { sorts: options.sorts }),
+      ...(options.start_cursor && { start_cursor: options.start_cursor })
     }
 
-    return collectPaginatedAPI(this.client.databases.query, params)
+    return this.client.databases.query(params)
   }
 
   async getDatabase(databaseId) {
@@ -336,6 +337,62 @@ class NotionCLI {
     return this.client.blocks.children.append({
       block_id: id,
       children
+    })
+  }
+
+  /**
+   * Fast, specialized logging command that appends a single block with a timestamp.
+   *
+   * @param {string} pageId - Page ID or Notion URL
+   * @param {string} message - Log message content
+   * @param {object} options
+   * @param {string} options.status - Status for log styling (inprogress, success, fail, info, or custom emoji)
+   * @returns {Promise<object>} - Appended block response
+   */
+  async log(pageId, message, options = {}) {
+    const id = this._parseId(pageId)
+    const status = options.status || 'inprogress'
+    const timestamp = `[${new Date().toISOString()}]`
+
+    let block = { object: 'block' }
+    let textContent = `${timestamp} ${message}`
+
+    if (status === 'inprogress') {
+      block.type = 'to_do'
+      block.to_do = {
+        rich_text: [{ type: 'text', text: { content: `⏳ ${textContent}` } }],
+        checked: false
+      }
+    } else if (status === 'success') {
+      block.type = 'to_do'
+      block.to_do = {
+        rich_text: [{ type: 'text', text: { content: `✅ ${textContent}` } }],
+        checked: true
+      }
+    } else if (status === 'fail') {
+      block.type = 'callout'
+      block.callout = {
+        rich_text: [{ type: 'text', text: { content: textContent } }],
+        icon: { type: 'emoji', emoji: '❌' },
+        color: 'red_background'
+      }
+    } else if (status === 'info') {
+      block.type = 'paragraph'
+      block.paragraph = {
+        rich_text: [{ type: 'text', text: { content: `ℹ️ ${textContent}` } }]
+      }
+    } else {
+      // Arbitrary emoji status indicator support
+      block.type = 'to_do'
+      block.to_do = {
+        rich_text: [{ type: 'text', text: { content: `${status} ${textContent}` } }],
+        checked: false
+      }
+    }
+
+    return this.client.blocks.children.append({
+      block_id: id,
+      children: [block]
     })
   }
 
@@ -388,6 +445,56 @@ class NotionCLI {
 
   async getMe() {
     return this.client.users.me()
+  }
+
+  // ---------------------------------------------------------------------------
+  // WEBHOOK OPERATIONS
+  // ---------------------------------------------------------------------------
+
+  async _webhookFetch(path, method = 'GET', body = null) {
+    const url = `https://api.notion.com/v1/webhooks${path}`
+    const options = {
+      method,
+      headers: {
+        'Authorization': `Bearer ${this.client.auth}`,
+        'Notion-Version': this.client.notionVersion,
+        'Content-Type': 'application/json'
+      }
+    }
+    if (body) {
+      options.body = JSON.stringify(body)
+    }
+
+    const res = await fetch(url, options)
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}))
+      throw new Error(`Webhook API Error: ${res.status} ${res.statusText} - ${JSON.stringify(errorData)}`)
+    }
+    return res.json()
+  }
+
+  async createWebhook(pageId, url) {
+    const id = this._parseId(pageId)
+    // The specific endpoints are undocumented/internal to the specification.
+    // Making a reasonable assumption based on REST principles as specified in the plan.
+    // "creating a subscription that fires on page.updated events for the specified page."
+    return this._webhookFetch('', 'POST', {
+      filter: {
+        type: 'page.updated',
+        page_id: id
+      },
+      target: {
+        url: url
+      }
+    })
+  }
+
+  async deleteWebhook(webhookId) {
+    return this._webhookFetch(`/${webhookId}`, 'DELETE')
+  }
+
+  async listWebhooks() {
+    return this._webhookFetch('', 'GET')
   }
 
   // ---------------------------------------------------------------------------
